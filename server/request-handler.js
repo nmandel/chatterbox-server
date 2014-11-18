@@ -1,7 +1,11 @@
 var exports = module.exports = {};
 var url = require("url");
 var database = {};
-database.results = [];
+database.results = [{
+    "username": "sisyphus",
+    "text" : "I rock"
+  }
+];
 
 /*************************************************************
 
@@ -37,9 +41,8 @@ var requestHandler = function(request, response) {
       var query = JSON.parse(query);
       var room = room || "";
       var item = {
-        room: room,
-        message: query.message,
-        username: query.username
+        username: query.username,
+        text: query.text,
       };
       database.results.push(item);
     };
@@ -54,6 +57,7 @@ var requestHandler = function(request, response) {
 
 // Do something with options
   if (request.method === "OPTIONS") {
+    console.log("Options:" + path);
     var statusCode = 200;
     response.writeHead(statusCode, headers);
     response.end();
@@ -62,10 +66,11 @@ var requestHandler = function(request, response) {
 
   // if request.method == get
   if (request.method === "GET") {
+    console.log(route);
     // var query = url.parse(request.url, true).query;
     // var path = url.parse(request.url, true).pathname;
     // console.log(path);
-    if (route === "/messages"){
+    if (route === "/messages" || route === "/messages/"){
       var statusCode = 200;
       // console.log(JSON.stringify(database));
       response.writeHead(statusCode, headers);
@@ -94,17 +99,21 @@ var requestHandler = function(request, response) {
     // var query = url.parse(request.url, true).query;
     // var path = url.parse(request.url, true).pathname;
     // console.log("This is posting something1" + path);
-    if (route === "/messages" || path === "/send"){
+    if (route === "/messages/" || path === "/send"){
       // console.log("This is posting something" + query);
       var statusCode = 201;
-      request.on("data", function(data) {
+      var body = "";
+      request.on("data", function(chunk) {
         // console.log(data);
-        writeToDatabase(data, "");
+        body += chunk;
+      });
+      request.on("end", function(){
+        writeToDatabase(body, "");
+        response.writeHead(201, headers);
+        response.end();
       });
       // database.results.push(query);
       // console.log(database);
-      response.writeHead(statusCode, headers);
-      response.end();
     } else if (route.length > 0 ){
       // console.log("route: " + route);
       // console.log("query: " + query.username);
@@ -142,7 +151,6 @@ var requestHandler = function(request, response) {
   //
   // You will need to change this if you are sending something
   // other than plain text, like JSON or HTML.
-  headers['Content-Type'] = "text/plain";
 
 
   // .writeHead() writes to the request line and headers of the response,
@@ -174,7 +182,8 @@ var defaultCorsHeaders = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
   "access-control-allow-headers": "Origin, x-parse-application-id, x-parse-rest-api-key, content-type, accept",
-  "access-control-max-age": 10 // Seconds.
+  "access-control-max-age": 10,
+  "Content-Type":"application/json"
 };
 
 exports.requestHandler = requestHandler;
