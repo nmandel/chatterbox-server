@@ -1,6 +1,10 @@
 var exports = module.exports = {};
 var url = require("url");
 var database = {};
+database.results = [
+  { username: "Loring",
+  message: "Wassup! So good. So dirty." },
+];
 
 /*************************************************************
 
@@ -37,20 +41,55 @@ var requestHandler = function(request, response) {
   var query = url.parse(request.url, true).query.fun;
   console.log(query);
 
+  var headers = defaultCorsHeaders;
+
 // Do something with options
+  if (request.method === "OPTIONS") {
+    var statusCode = 200;
+    response.writeHead(statusCode, headers);
+    response.end();
+  }
+
 
   // if request.method == get
   if (request.method === "GET") {
-    //  parse the url for funny stuff
     var query = url.parse(request.url, true).query;
+    var path = url.parse(request.url, true).pathname;
+    console.log(path);
+    if (path === "/classes/messages"){
+     var statusCode = 200;
+     console.log(JSON.stringify(database));
+     response.end(JSON.stringify(database));
+    } else {
+      var statusCode = 404;
+      response.writeHead(statusCode, headers);
+      response.end();
+    }
+    //  parse the url for funny stuff
+    // var query = url.parse(request.url, true).query;
     //  filter through storage
     //  check if data is in storage
     //    if not, return the 400 status code
     //  put filtered data in json format
-    database.dumpOn(user);
-
   }
   //  return data
+
+  if(request.method === "POST") {
+    var query = url.parse(request.url, true).query;
+    var path = url.parse(request.url, true).pathname;
+    console.log("This is posting something1" + path);
+    if (path === "/classes/messages" || path === "/send"){
+      console.log("This is posting something" + query);
+      var statusCode = 201;
+      database.results.push(query);
+      response.writeHead(statusCode, headers);
+      response.end();
+    } else {
+      var statusCode = 404;
+      response.writeHead(statusCode, headers);
+      response.end();
+    }
+  }
   // if request.method == post
   //   parse the url for funny stuff
   //   put the data from url into storage
@@ -83,7 +122,7 @@ var requestHandler = function(request, response) {
   //
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
-  response.end("Hello, World!");
+  response.end(JSON.stringify(database));
 
 
 };
@@ -98,9 +137,10 @@ var requestHandler = function(request, response) {
 // Another way to get around this restriction is to serve you chat
 // client from this domain by setting up static file serving.
 var defaultCorsHeaders = {
+  "access-control-allow-credentials": true,
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "access-control-allow-headers": "content-type, accept",
+  "access-control-allow-headers": "Origin, X-Requested-With, content-type, accept",
   "access-control-max-age": 10 // Seconds.
 };
 
