@@ -1,4 +1,7 @@
 var exports = module.exports = {};
+var url = require("url");
+var database = {};
+
 /*************************************************************
 
 You should implement your request handler function in this file.
@@ -28,7 +31,33 @@ var requestHandler = function(request, response) {
   // Adding more logging to your server can be an easy way to get passive
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
+  //
+  //
   console.log("Serving request type " + request.method + " for url " + request.url);
+  var query = url.parse(request.url, true).query.fun;
+  console.log(query);
+
+// Do something with options
+
+  // if request.method == get
+  if (request.method === "GET") {
+    //  parse the url for funny stuff
+    var query = url.parse(request.url, true).query;
+    //  filter through storage
+    //  check if data is in storage
+    //    if not, return the 400 status code
+    //  put filtered data in json format
+    database.dumpOn(user);
+
+  }
+  //  return data
+  // if request.method == post
+  //   parse the url for funny stuff
+  //   put the data from url into storage
+  //   return 200 status
+  //else
+  //  (nothing in url) send 400 code
+
 
   // The outgoing status.
   var statusCode = 200;
