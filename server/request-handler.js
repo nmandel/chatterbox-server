@@ -1,10 +1,7 @@
 var exports = module.exports = {};
 var url = require("url");
 var database = {};
-database.results = [
-  { username: "Loring",
-  message: "Wassup! So good. So dirty." },
-];
+database.results = [];
 
 /*************************************************************
 
@@ -36,10 +33,22 @@ var requestHandler = function(request, response) {
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
   //
-  //
+  var writeToDatabase = function(query, room) {
+      var query = JSON.parse(query);
+      var room = room || "";
+      var item = {
+        room: room,
+        message: query.message,
+        username: query.username
+      };
+      database.results.push(item);
+    };
+
   console.log("Serving request type " + request.method + " for url " + request.url);
-  var query = url.parse(request.url, true).query.fun;
-  console.log(query);
+  // var query = url.parse(request.url, true).query;
+  var path = url.parse(request.url, true).pathname;
+  var route = path.split('/classes')[1];
+
 
   var headers = defaultCorsHeaders;
 
@@ -53,13 +62,20 @@ var requestHandler = function(request, response) {
 
   // if request.method == get
   if (request.method === "GET") {
-    var query = url.parse(request.url, true).query;
-    var path = url.parse(request.url, true).pathname;
-    console.log(path);
-    if (path === "/classes/messages"){
-     var statusCode = 200;
-     console.log(JSON.stringify(database));
-     response.end(JSON.stringify(database));
+    // var query = url.parse(request.url, true).query;
+    // var path = url.parse(request.url, true).pathname;
+    // console.log(path);
+    if (route === "/messages"){
+      var statusCode = 200;
+      // console.log(JSON.stringify(database));
+      response.writeHead(statusCode, headers);
+      response.end(JSON.stringify(database));
+    } else if (route === "/room1" ){
+      console.log(route);
+      var statusCode = 200;
+      response.writeHead(statusCode, headers);
+      response.end(JSON.stringify(database));
+
     } else {
       var statusCode = 404;
       response.writeHead(statusCode, headers);
@@ -75,16 +91,34 @@ var requestHandler = function(request, response) {
   //  return data
 
   if(request.method === "POST") {
-    var query = url.parse(request.url, true).query;
-    var path = url.parse(request.url, true).pathname;
-    console.log("This is posting something1" + path);
-    if (path === "/classes/messages" || path === "/send"){
-      console.log("This is posting something" + query);
+    // var query = url.parse(request.url, true).query;
+    // var path = url.parse(request.url, true).pathname;
+    // console.log("This is posting something1" + path);
+    if (route === "/messages" || path === "/send"){
+      // console.log("This is posting something" + query);
       var statusCode = 201;
-      database.results.push(query);
+      request.on("data", function(data) {
+        // console.log(data);
+        writeToDatabase(data, "");
+      });
+      // database.results.push(query);
+      // console.log(database);
       response.writeHead(statusCode, headers);
       response.end();
-    } else {
+    } else if (route.length > 0 ){
+      // console.log("route: " + route);
+      // console.log("query: " + query.username);
+      var statusCode = 201;
+      request.on("data", function(data) {
+        console.log(data);
+        writeToDatabase(data, route);
+      });
+      // // database.results.push(query);
+      // console.log(database);
+      console.log(statusCode);
+      response.writeHead(statusCode, headers);
+      response.end();
+    }else {
       var statusCode = 404;
       response.writeHead(statusCode, headers);
       response.end();
@@ -113,7 +147,7 @@ var requestHandler = function(request, response) {
 
   // .writeHead() writes to the request line and headers of the response,
   // which includes the status and all headers.
-  response.writeHead(statusCode, headers);
+  // response.writeHead(statusCode, headers);
 
   // Make sure to always call response.end() - Node may not send
   // anything back to the client until you do. The string you pass to
@@ -122,7 +156,7 @@ var requestHandler = function(request, response) {
   //
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
-  response.end(JSON.stringify(database));
+  // response.end(JSON.stringify(database));
 
 
 };
@@ -137,10 +171,9 @@ var requestHandler = function(request, response) {
 // Another way to get around this restriction is to serve you chat
 // client from this domain by setting up static file serving.
 var defaultCorsHeaders = {
-  "access-control-allow-credentials": true,
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "access-control-allow-headers": "Origin, X-Requested-With, content-type, accept",
+  "access-control-allow-headers": "Origin, x-parse-application-id, x-parse-rest-api-key, content-type, accept",
   "access-control-max-age": 10 // Seconds.
 };
 
